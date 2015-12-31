@@ -135,9 +135,13 @@ func startApp() {
 }
 
 func main() {
-	confPath := "cfg"
-	confFilename := "server"
-	logFilename := "error.log"
+	confPath := "/etc/ginCamAlarm/"
+	confFilename := "ginCamAlarm"
+	logFilename := "/var/log/ginCamAlarm/error.log"
+
+	// confPath := "cfg"
+	// confFilename := "ginCamAlarm"
+	// logFilename := "error.log"
 
 	fd := initLogging(&logFilename)
 	defer fd.Close()

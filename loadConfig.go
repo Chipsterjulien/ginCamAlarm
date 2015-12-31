@@ -33,7 +33,6 @@ func loadConfig(filenamePath *string, filename *string) {
 		log.Debug("\"debug\" is selected")
 	default:
 		logging.SetLevel(2, "")
-		//log.Debug("\"default\" is selected (warning)")
 	}
 
 	log.Debug("loadConfig func:")
