@@ -1,0 +1,9 @@
+# logtype can take: debug, info, notice, warning, error, critical
+# warning is the default
+logtype = "debug"
+
+[authorized_ip]
+ip = ["192.168.1.6"]
+
+[server]
+port = 8080

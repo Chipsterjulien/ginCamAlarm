@@ -1,0 +1,292 @@
+loadConfig Unable to load config file:%!(EXTRA viper.UnsupportedConfigError=Unsupported Config Type "")
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm Ip du client: [::1]:46496
+GetStateAlarm Ip du client: [::1]:46496
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm Ip du client: [::1]:46498
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm Ip du client: 192.168.1.6:36106
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm Ip du client: 192.168.1.6:36164
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm Ip du client: 192.168.1.6:36165
+GetStateAlarm Ip autorisées: []
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm Ip du client: 192.168.1.6:36167
+GetStateAlarm Ip autorisées: []
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm Ip du client: 192.168.1.6:36168
+GetStateAlarm Ip autorisées: []
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm Ip du client: 192.168.1.6:36169
+GetStateAlarm Ip autorisées: [192.168.1.16 192.168.1.15]
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm Ip du client: 192.168.1.6:36170
+GetStateAlarm IP autorisée: 192.168.1.16
+GetStateAlarm IP autorisée: 192.168.1.15
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45393
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized isAuthorized retourne: false
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45395
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm pgrep command failed: exec: "pgrep firefox": executable file not found in $PATH
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45396
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm pgrep command failed: fork/exec /bin/sh -c pgrep firefox: no such file or directory
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45397
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm pgrep command failed: exit status 2
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45398
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm Sorti: 7207
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45399
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm Sorti: 7207
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45400
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm pgrep command failed: exit status 1
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45402
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm pgrep command failed: exit status 1
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45403
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm Retour de la commande pgrep: exit status 1
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45408
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm Retour de la commande pgrep: 7207
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45409
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm Retour de la commande pgrep: exit status 1
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45415
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.16
+isAuthorized IP autorisée: 192.168.1.15
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm Retour de la commande pgrep: exit status 1
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+GetStateAlarm IP du client: 192.168.1.6:45419
+GetStateAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+GetStateAlarm Retour de la commande pgrep: exit status 1
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+StartAlarm IP du client: 192.168.1.6:45422
+StartAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+StartAlarm IP du client: 192.168.1.6:45423
+StartAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+StartAlarm IP du client: 192.168.1.6:45424
+StartAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+loadConfig "debug" is selected
+loadConfig loadConfig func:
+loadConfig   path: cfg
+loadConfig   filename: server
+loadConfig   logtype in file config is "debug"
+startApp Port: 8080
+StartAlarm IP du client: 192.168.1.6:45425
+StartAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+StartAlarm IP du client: 192.168.1.6:45427
+StartAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+StartAlarm IP du client: 192.168.1.6:45428
+StartAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+StartAlarm IP du client: 192.168.1.6:45429
+StartAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
+StartAlarm IP du client: 192.168.1.6:45430
+StartAlarm IP du client découpée: 192.168.1.6
+isAuthorized IP autorisée: 192.168.1.6
+isAuthorized isAuthorized retourne: true
