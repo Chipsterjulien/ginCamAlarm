@@ -1,26 +1,41 @@
 package main
 
 import (
-	"strings"
-	"strconv"
 	"os/exec"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/op/go-logging"
 	"github.com/spf13/viper"
 )
 
-func isAuthorized(clientIP string) bool {
+func isAuthorized(c *gin.Context) bool {
 	log := logging.MustGetLogger("log")
 
+	clientIP := c.ClientIP()
+	log.Debug("IP du client: %s", clientIP)
+
 	if viper.GetString("logtype") == "debug" {
-		for _, ip := range(viper.GetStringSlice("authorized_ip.ip")) {
+		for _, ip := range viper.GetStringSlice("authorized_ip.ip") {
 			log.Debug("IP autorisée: %s", ip)
 		}
 	}
-	for _, ip := range(viper.GetStringSlice("authorized_ip.ip")) {
+
+	if strings.Contains(clientIP, "[::1]") {
+		log.Debug("Accès local au serveur")
+		log.Debug("isAuthorized retourne: true")
+
+		return true
+	}
+
+	clientIP = strings.Split(clientIP, ":")[0]
+	log.Debug("IP du client découpée: %s", clientIP)
+
+	for _, ip := range viper.GetStringSlice("authorized_ip.ip") {
 		if clientIP == ip {
 			log.Debug("isAuthorized retourne: true")
+
 			return true
 		}
 	}
@@ -32,11 +47,7 @@ func isAuthorized(clientIP string) bool {
 func GetStateAlarm(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
-	log.Debug("IP du client: %s", c.ClientIP())
-	clientIP := strings.Split(c.ClientIP(), ":")[0]
-	log.Debug("IP du client découpée: %s", clientIP)
-
-	if isAuthorized(clientIP) {
+	if isAuthorized(c) {
 		// chercher l'état de la caméra
 		out, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output()
 		if err != nil {
@@ -57,11 +68,7 @@ func GetStateAlarm(c *gin.Context) {
 func StartAlarm(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
-	log.Debug("IP du client: %s", c.ClientIP())
-	clientIP := strings.Split(c.ClientIP(), ":")[0]
-	log.Debug("IP du client découpée: %s", clientIP)
-
-	if !isAuthorized(clientIP) {
+	if !isAuthorized(c) {
 		// renvoyer une erreur json
 		c.JSON(401, gin.H{"error": "Unauthorized access"})
 
@@ -72,14 +79,16 @@ func StartAlarm(c *gin.Context) {
 	exec.Command("/bin/sh", "-c", "mailmotiond &").Output()
 
 	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output(); err != nil {
-		c.JSON(500, gin.H{"error": "motion is not running"})
+		log.Warning("motion is not running")
+		c.JSON(500, gin.H{"error": "motion is not running", "state": "stop"})
 
 		return
 	}
-	
+
 	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^mailmotiond$").Output(); err != nil {
 		exec.Command("/bin/sh", "-c", "killall -9 motion").Output()
-		c.JSON(500, gin.H{"error": "mailmotiond is not running"})
+		log.Warning("mailmotiond is not running")
+		c.JSON(500, gin.H{"error": "mailmotiond is not running", "state": "stop"})
 
 		return
 	}
@@ -88,13 +97,9 @@ func StartAlarm(c *gin.Context) {
 }
 
 func StopAlarm(c *gin.Context) {
-	log := logging.MustGetLogger("log")
+	// log := logging.MustGetLogger("log")
 
-	log.Debug("IP du client: %s", c.ClientIP())
-	clientIP := strings.Split(c.ClientIP(), ":")[0]
-	log.Debug("IP du client découpée: %s", clientIP)
-
-	if !isAuthorized(clientIP) {
+	if !isAuthorized(c) {
 		// renvoyer une erreur json
 		c.JSON(401, gin.H{"error": "Unauthorized access"})
 
