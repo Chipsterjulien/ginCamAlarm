@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/itsjamie/gin-cors"
 	"github.com/op/go-logging"
 	"github.com/spf13/viper"
 )
@@ -128,6 +129,17 @@ func startApp() {
 	}
 
 	g := gin.Default()
+
+	g.Use(cors.Middleware(cors.Config{
+		Origins:         "*",
+		Methods:         "GET, PUT, POST, DELETE",
+		RequestHeaders:  "Origin, Authorization, Content-Type",
+		ExposedHeaders:  "",
+		MaxAge:          50 * time.Second,
+		Credentials:     true,
+		ValidateHeaders: false,
+	}))
+
 	v1 := g.Group("api/v1")
 	{
 		v1.GET("/stateAlarm", GetStateAlarm)
@@ -140,9 +152,9 @@ func startApp() {
 }
 
 func main() {
-	confPath := "/etc/ginCamAlarm/"
-	confFilename := "ginCamAlarm"
-	logFilename := "/var/log/ginCamAlarm/error.log"
+	confPath := "/etc/gincamalarm/"
+	confFilename := "gincamalarm"
+	logFilename := "/var/log/gincamalarm/error.log"
 
 	// confPath := "cfg"
 	// confFilename := "ginCamAlarm"
