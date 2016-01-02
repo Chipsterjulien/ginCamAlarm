@@ -157,7 +157,7 @@ func main() {
 	logFilename := "/var/log/gincamalarm/error.log"
 
 	// confPath := "cfg"
-	// confFilename := "ginCamAlarm"
+	// confFilename := "gincamalarm"
 	// logFilename := "error.log"
 
 	fd := initLogging(&logFilename)
