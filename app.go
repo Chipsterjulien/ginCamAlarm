@@ -4,6 +4,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
@@ -54,15 +55,15 @@ func GetStateAlarm(c *gin.Context) {
 		if err != nil {
 			log.Debug("Retour de la commande pgrep: %v", err)
 			// renvoyer l'état
-			c.JSON(200, gin.H{"state": "stop"})
+			c.JSON(200, gin.H{"state": "stop", "location": viper.GetString("server.location")})
 		} else {
 			log.Debug("Retour de la commande pgrep: %s", out)
 			// renvoyer l'état
-			c.JSON(200, gin.H{"state": "start"})
+			c.JSON(200, gin.H{"state": "start", "location": viper.GetString("server.location")})
 		}
 	} else {
 		// renvoyer une erreur json
-		c.JSON(401, gin.H{"error": "Unauthorized access"})
+		c.JSON(401, gin.H{"error": "Unauthorized access", "location": viper.GetString("server.location")})
 	}
 }
 
@@ -70,55 +71,67 @@ func StartAlarm(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
 	if !isAuthorized(c) {
-		// renvoyer une erreur json
-		c.JSON(401, gin.H{"error": "Unauthorized access"})
+		c.JSON(401, gin.H{"error": "Unauthorized access", "location": viper.GetString("server.location")})
 
 		return
 	}
 
-	exec.Command("/bin/sh", "-c", "motion &").Output()
-	exec.Command("/bin/sh", "-c", "mailmotiond &").Output()
+	log.Debug("Je suis avant motion")
+	m := exec.Command("/bin/sh", "-c", "motion&")
+	m.Start()
+	m.Wait()
+	log.Debug("Je viens de passer motion")
+	m = exec.Command("/bin/sh", "-c", "mailmotion&")
+	m.Start()
+	m.Wait()
+	log.Debug("Je viens de passer mailmotion")
 
+	log.Debug("Je teste si motion est bien lancé")
 	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output(); err != nil {
 		log.Warning("motion is not running")
-		c.JSON(500, gin.H{"error": "motion is not running", "state": "stop"})
+
+		c.JSON(500, gin.H{"error": "motion is not running", "state": "stop", "location": viper.GetString("server.location")})
 
 		return
 	}
 
-	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^mailmotiond$").Output(); err != nil {
+	log.Debug("J'ai testé si motion était bien activé")
+	log.Debug("Je vais testé si mailmotion est bien lancé")
+
+	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^mailmotion$").Output(); err != nil {
 		exec.Command("/bin/sh", "-c", "killall -9 motion").Output()
-		log.Warning("mailmotiond is not running")
-		c.JSON(500, gin.H{"error": "mailmotiond is not running", "state": "stop"})
+		log.Warning("mailmotion is not running and there is something wrong with mailmotion")
+
+		c.JSON(500, gin.H{"error": "mailmotion is not running", "state": "stop", "location": viper.GetString("server.location")})
 
 		return
 	}
 
-	c.JSON(200, gin.H{"state": "start"})
+	log.Debug("J'ai bien testé si mailmotion était lancé")
+
+	c.JSON(200, gin.H{"state": "start", "location": viper.GetString("server.location")})
 }
 
 func StopAlarm(c *gin.Context) {
 	// log := logging.MustGetLogger("log")
-
 	if !isAuthorized(c) {
-		// renvoyer une erreur json
-		c.JSON(401, gin.H{"error": "Unauthorized access"})
+		c.JSON(401, gin.H{"error": "Unauthorized access", "location": viper.GetString("server.location")})
 
 		return
 	}
 
 	if _, err := exec.Command("/bin/sh", "-c", "killall -9 motion").Output(); err != nil {
-		c.JSON(500, gin.H{"error": "Unable to stop motion"})
+		c.JSON(500, gin.H{"error": "Unable to stop motion", "location": viper.GetString("server.location")})
 
 		return
 	}
-	if _, err := exec.Command("/bin/sh", "-c", "killall -9 mailmotiond").Output(); err != nil {
-		c.JSON(500, gin.H{"error": "Unable to stop mailmotiond"})
+	if _, err := exec.Command("/bin/sh", "-c", "killall -9 mailmotion").Output(); err != nil {
+		c.JSON(500, gin.H{"error": "Unable to stop mailmotion", "location": viper.GetString("server.location")})
 
 		return
 	}
 
-	c.JSON(200, gin.H{"state": "stop"})
+	c.JSON(200, gin.H{"state": "stop", "location": viper.GetString("server.location")})
 }
 
 func startApp() {

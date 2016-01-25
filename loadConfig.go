@@ -4,6 +4,7 @@ import (
 	"github.com/op/go-logging"
 	"github.com/spf13/viper"
 	"os"
+	"path"
 )
 
 func loadConfig(filenamePath *string, filename *string) {
@@ -13,7 +14,7 @@ func loadConfig(filenamePath *string, filename *string) {
 	viper.AddConfigPath(*filenamePath)
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Critical("Unable to load config file:", err)
+		log.Critical("Unable to load config \"" + path.Join(*filenamePath, *filename)+ "\" file:", err)
 		os.Exit(1)
 	}
 

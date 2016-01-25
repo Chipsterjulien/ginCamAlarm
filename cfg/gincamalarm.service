@@ -5,7 +5,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/ginCamAlarm
+ExecStart=/usr/bin/gincamalarm
 Restart=on-failure
 RestartSec=10
 

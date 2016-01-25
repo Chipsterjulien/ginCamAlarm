@@ -15,7 +15,7 @@ func initLogging(logFilename *string) *os.File {
 
 	fd, err := os.OpenFile(*logFilename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		log.Critical("Impossible to open \""+*logFilename+"\":", err)
+		log.Critical("Unable to open \""+ *logFilename +"\" file:", err)
 	}
 	format2 := logging.MustStringFormatter("%{shortfunc} %{message}")
 	backend2 := logging.NewLogBackend(fd, "", 0)
