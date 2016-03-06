@@ -2,10 +2,6 @@
 # warning is the default
 logtype = "debug"
 
-[authorized]
-ip = []
-host = []
-
 [server]
 port = 8090
 location = "somewhere"

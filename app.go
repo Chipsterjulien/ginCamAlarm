@@ -4,6 +4,8 @@ import (
 	"os/exec"
 	"strconv"
 	"time"
+	"os"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
@@ -16,11 +18,11 @@ func GetStateAlarm(c *gin.Context) {
 
 	out, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output()
 	if err != nil {
-		log.Debug("Retour de la commande pgrep: %v", err)
+		log.Debug(fmt.Sprintf("Retour de la commande pgrep: %v", err))
 		// renvoyer l'état
 		c.JSON(200, gin.H{"state": "stop", "location": viper.GetString("server.location")})
 	} else {
-		log.Debug("Retour de la commande pgrep: %s", out)
+		log.Debug(fmt.Sprintf("Retour de la commande pgrep: %s", out))
 		// renvoyer l'état
 		c.JSON(200, gin.H{"state": "start", "location": viper.GetString("server.location")})
 	}
@@ -33,15 +35,31 @@ func TakePicture(c *gin.Context) {
 func StartAlarm(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
-	m := exec.Command("/bin/sh", "-c", "motion&")
-	m.Start()
-	m.Wait()
-	m = exec.Command("/bin/sh", "-c", "mailmotion&")
-	m.Start()
-	m.Wait()
+	if err := os.MkdirAll("/tmp/motion", 0744); err != nil {
+		log.Warning(fmt.Sprintf("Unable to create /tmp/motion directories: %v", err))
+		c.JSON(500, gin.H{"error": "mailmotion is not running", "state": "stop", "location": viper.GetString("server.location")})
+
+		return
+	}
+
+	cmdList := []string{
+		"/opt/vc/bin/raspistill -o /media/tmpfs/picture.jpg -t 0 -tl 500 -w 640 -h 480 -bm",
+		"motion",
+		"mailmotion",
+	}
+
+	for _, cmd := range cmdList {
+		go func (cmd string) {
+			m := exec.Command("/bin/sh", "-c", cmd)
+			m.Start()
+			m.Wait()
+		}(cmd)
+	}
 
 	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output(); err != nil {
 		log.Warning("motion is not running")
+		exec.Command("/bin/sh", "-c", "killall -9 mailmotion").Output()
+		exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
 
 		c.JSON(500, gin.H{"error": "motion is not running", "state": "stop", "location": viper.GetString("server.location")})
 
@@ -50,6 +68,7 @@ func StartAlarm(c *gin.Context) {
 
 	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^mailmotion$").Output(); err != nil {
 		exec.Command("/bin/sh", "-c", "killall -9 motion").Output()
+		exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
 		log.Warning("mailmotion is not running and there is something wrong with mailmotion")
 
 		c.JSON(500, gin.H{"error": "mailmotion is not running", "state": "stop", "location": viper.GetString("server.location")})
@@ -63,6 +82,8 @@ func StartAlarm(c *gin.Context) {
 func StopAlarm(c *gin.Context) {
 	// log := logging.MustGetLogger("log")
 
+	exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
+
 	if _, err := exec.Command("/bin/sh", "-c", "killall -9 motion").Output(); err != nil {
 		c.JSON(500, gin.H{"error": "Unable to stop motion", "location": viper.GetString("server.location")})
 
@@ -70,6 +91,12 @@ func StopAlarm(c *gin.Context) {
 	}
 	if _, err := exec.Command("/bin/sh", "-c", "killall -9 mailmotion").Output(); err != nil {
 		c.JSON(500, gin.H{"error": "Unable to stop mailmotion", "location": viper.GetString("server.location")})
+
+		return
+	}
+
+	if err := os.RemoveAll("/tmp/motion"); err != nil {
+		c.JSON(500, gin.H{"error": "Unable to remove directory"})
 
 		return
 	}
@@ -104,8 +131,14 @@ func startApp() {
 		v1.PUT("/stopAlarm", StopAlarm)
 	}
 
-	log.Debug("Port: %d", viper.GetInt("server.port"))
-	g.Run(":" + strconv.Itoa(viper.GetInt("server.port")))
+	certFile := viper.GetString("server.certFile")
+	keyFile := viper.GetString("server.keyFile")
+
+	log.Debug(fmt.Sprintf("Port: %d", viper.GetInt("server.port")))
+	if err := g.Run(":" + strconv.Itoa(viper.GetInt("server.port"))); err != nil {
+		log.Critical(fmt.Sprintf("Unable to start serveur: %v", err))
+		os.Exit(1)
+	}
 }
 
 func main() {

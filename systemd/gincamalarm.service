@@ -5,6 +5,8 @@ After=network.target
 
 [Service]
 Type=simple
+User=http
+Group=http
 ExecStart=/usr/bin/gincamalarm
 Restart=on-failure
 RestartSec=10
