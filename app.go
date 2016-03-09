@@ -19,17 +19,12 @@ func GetStateAlarm(c *gin.Context) {
 	out, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output()
 	if err != nil {
 		log.Debug(fmt.Sprintf("Retour de la commande pgrep: %v", err))
-		// renvoyer l'état
 		c.JSON(200, gin.H{"state": "stop", "location": viper.GetString("server.location")})
 	} else {
 		log.Debug(fmt.Sprintf("Retour de la commande pgrep: %s", out))
-		// renvoyer l'état
 		c.JSON(200, gin.H{"state": "start", "location": viper.GetString("server.location")})
 	}
 
-}
-
-func TakePicture(c *gin.Context) {
 }
 
 func StartAlarm(c *gin.Context) {
@@ -79,9 +74,38 @@ func StartAlarm(c *gin.Context) {
 	c.JSON(200, gin.H{"state": "start", "location": viper.GetString("server.location")})
 }
 
-func StopAlarm(c *gin.Context) {
-	// log := logging.MustGetLogger("log")
+func StartStream(c *gin.Context) {
+	cmdList := []string{
+		"/opt/vc/bin/raspistill -o /media/tmpfs/picture.jpg -t 0 -tl 500 -w 640 -h 480 -bm",
+		"LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_file.so -f /media/tmpfs -n picture.jpg\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\""
+	}
 
+	for _, cmd := range cmdList {
+		go func (cmd string) {
+			m := exec.Command("/bin/sh", "-c", cmd)
+			m.Start()
+			m.Wait()
+		}(cmd)
+	}
+	
+	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^raspistill$").Output(); err != nil {
+		exec.Command("/bin/sh", "-c", "killall -9 mjpg_stream").Output()
+		c.JSON(500, gin.H{"error": "raspistill is not running", "stream": "stop", "location": viper.GetString("server.location")})
+
+		return
+	}
+
+	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^mjpg_stream$").Output(); err != nil {
+		exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
+		c.JSON(500, gin.H{"error": "mjpg_stream is not running", "stream": "stop", "location": viper.GetString("server.location")})
+
+		return
+	}
+
+	c.JSON(200, gin.H{"stream": "start", "location": viper.GetString("server.location")})
+}
+
+func StopAlarm(c *gin.Context) {
 	exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
 
 	if _, err := exec.Command("/bin/sh", "-c", "killall -9 motion").Output(); err != nil {
@@ -102,6 +126,21 @@ func StopAlarm(c *gin.Context) {
 	}
 
 	c.JSON(200, gin.H{"state": "stop", "location": viper.GetString("server.location")})
+}
+
+func StopStream(c *gin.Context) {
+	if _, err := exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output(); err != nil {
+		c.JSON(500, gin.H{"error": "Unable to stop raspistill", "location": viper.GetString("server.location")})
+
+		return
+	}
+	if _, err := exec.Command("/bin/sh", "-c", "killall -9 mjpg_stream").Output(); err != nil {
+		c.JSON(500, gin.H{"error": "Unable to stop mjpg_stream", "location": viper.GetString("server.location")})
+
+		return
+	}
+
+	c.JSON(200, gin.H{"stream": "stop", "location": viper.GetString("server.location")})
 }
 
 func startApp() {
@@ -126,13 +165,11 @@ func startApp() {
 	v1 := g.Group("api/v1")
 	{
 		v1.GET("/stateAlarm", GetStateAlarm)
-		v1.GET("/takePicture", TakePicture)
 		v1.PUT("/startAlarm", StartAlarm)
 		v1.PUT("/stopAlarm", StopAlarm)
+		v1.PUT("/startStream", StartStream)
+		v1.PUT("/stopStream", StopStream)
 	}
-
-	certFile := viper.GetString("server.certFile")
-	keyFile := viper.GetString("server.keyFile")
 
 	log.Debug(fmt.Sprintf("Port: %d", viper.GetInt("server.port")))
 	if err := g.Run(":" + strconv.Itoa(viper.GetInt("server.port"))); err != nil {
@@ -145,6 +182,8 @@ func main() {
 	confPath := "/etc/gincamalarm/"
 	confFilename := "gincamalarm"
 	logFilename := "/var/log/gincamalarm/error.log"
+
+	// Si je veux savoir si un processus est déjà lancé, il faut que j'utilise pgrep pour ensuite kill la bonne appli avec son numéro
 
 	// confPath := "cfg"
 	// confFilename := "gincamalarm"

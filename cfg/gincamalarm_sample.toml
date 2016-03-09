@@ -5,10 +5,3 @@ logtype = "debug"
 [server]
 port = 8090
 location = "somewhere"
-
-[picture]
-# for RPi
-# cmd = ""
-
-# command to take picture
-cmd = "raspistill -o /tmp/capture.jpg"
