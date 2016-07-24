@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"time"
-	"os"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/itsjamie/gin-cors"
@@ -42,29 +43,45 @@ func GetStateAlarm(c *gin.Context) {
 func StartAlarm(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
-	if _, err := os.Stat("/media/tmpfs/picture.jpg"); err == nil {
-		if er := os.Remove("/media/tmpfs/picture.jpg"); er != nil {
-			c.JSON(500, gin.H{"error": "Unable to start stream since unable to remove picture.jpg in tmpfs"})
+	method := viper.GetString("server.method")
+	cmdList := []string{}
+
+	switch method {
+	case "tmpfs":
+		if _, err := os.Stat("/media/tmpfs/picture.jpg"); err == nil {
+			if er := os.Remove("/media/tmpfs/picture.jpg"); er != nil {
+				c.JSON(500, gin.H{"error": "Unable to start stream since unable to remove picture.jpg in tmpfs"})
+
+				return
+			}
+		}
+
+		if err := os.MkdirAll("/tmp/motion", 0744); err != nil {
+			log.Warning(fmt.Sprintf("Unable to create /tmp/motion directories: %v", err))
+			c.JSON(500, gin.H{"error": "mailmotion is not running", "alarm": "stop", "location": viper.GetString("server.location")})
 
 			return
 		}
-	}
 
-	if err := os.MkdirAll("/tmp/motion", 0744); err != nil {
-		log.Warning(fmt.Sprintf("Unable to create /tmp/motion directories: %v", err))
-		c.JSON(500, gin.H{"error": "mailmotion is not running", "alarm": "stop", "location": viper.GetString("server.location")})
+		cmdList = []string{
+			"/opt/vc/bin/raspistill -o /media/tmpfs/picture.jpg -t 0 -tl 459 -w 640 -h 480 -bm",
+			"motion",
+			"mailmotion",
+		}
 
-		return
-	}
-
-	cmdList := []string{
-		"/opt/vc/bin/raspistill -o /media/tmpfs/picture.jpg -t 0 -tl 500 -w 640 -h 480 -bm",
-		"motion",
-		"mailmotion",
+	case "motionOnly":
+		cmdList = []string{
+			"motion",
+			"mailmotion",
+		}
+	default:
+		log.Criticalf("Unknown \"%s\" method in config file !", method)
+		c.JSON(500, gin.H{"error": fmt.Sprintf("Unknown \"%s\" method in config file !", method)})
+		os.Exit(1)
 	}
 
 	for _, cmd := range cmdList {
-		go func (cmd string) {
+		go func(cmd string) {
 			log.Info(fmt.Sprintf("Launch command: \"%s\"", cmd))
 			m := exec.Command("/bin/sh", "-c", cmd)
 			m.Start()
@@ -72,24 +89,49 @@ func StartAlarm(c *gin.Context) {
 		}(cmd)
 	}
 
-	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output(); err != nil {
-		log.Warning("motion is not running")
-		exec.Command("/bin/sh", "-c", "killall -9 mailmotion").Output()
-		exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
+	switch method {
+	case "tmpfs":
+		if _, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output(); err != nil {
+			log.Warning("motion is not running")
+			exec.Command("/bin/sh", "-c", "killall -9 mailmotion").Output()
+			exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
 
-		c.JSON(500, gin.H{"error": "motion is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
+			c.JSON(500, gin.H{"error": "motion is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
 
-		return
-	}
+			return
+		}
 
-	if _, err := exec.Command("/bin/sh", "-c", "pgrep ^mailmotion$").Output(); err != nil {
-		exec.Command("/bin/sh", "-c", "killall -9 motion").Output()
-		exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
-		log.Warning("mailmotion is not running and there is something wrong with mailmotion")
+		if _, err := exec.Command("/bin/sh", "-c", "pgrep ^mailmotion$").Output(); err != nil {
+			exec.Command("/bin/sh", "-c", "killall -9 motion").Output()
+			exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
+			log.Warning("mailmotion is not running and there is something wrong with mailmotion")
 
-		c.JSON(500, gin.H{"error": "mailmotion is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
+			c.JSON(500, gin.H{"error": "mailmotion is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
 
-		return
+			return
+		}
+	case "motionOnly":
+		if _, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output(); err != nil {
+			log.Warning("motion is not running")
+			exec.Command("/bin/sh", "-c", "killall -9 mailmotion").Output()
+
+			c.JSON(500, gin.H{"error": "motion is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
+
+			return
+		}
+
+		if _, err := exec.Command("/bin/sh", "-c", "pgrep ^mailmotion$").Output(); err != nil {
+			exec.Command("/bin/sh", "-c", "killall -9 motion").Output()
+			log.Warning("mailmotion is not running and there is something wrong with mailmotion")
+
+			c.JSON(500, gin.H{"error": "mailmotion is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
+
+			return
+		}
+	default:
+		log.Criticalf("Unknown \"%s\" method in config file !", method)
+		c.JSON(500, gin.H{"error": fmt.Sprintf("Unknown \"%s\" method in config file !", method)})
+		os.Exit(1)
 	}
 
 	c.JSON(200, gin.H{"alarm": "start", "stream": "stop", "location": viper.GetString("server.location")})
@@ -98,52 +140,93 @@ func StartAlarm(c *gin.Context) {
 func StartStream(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
-	if _, err := os.Stat("/media/tmpfs/picture.jpg"); err == nil {
-		if er := os.Remove("/media/tmpfs/picture.jpg"); er != nil {
-			c.JSON(500, gin.H{"error": "Unable to start stream since unable to remove picture.jpg in tmpfs"})
+	method := viper.GetString("server.method")
+	cmdList := []string{}
 
-			return
+	switch method {
+	case "tmpfs":
+		tmpfsPath := viper.GetString("server.tmpfsPath")
+		fl := path.Join(tmpfsPath, "picture.jpg")
+
+		if _, err := os.Stat(fl); err == nil {
+			if er := os.Remove(fl); er != nil {
+				c.JSON(500, gin.H{"error": fmt.Sprintf("Unable to start stream since unable to remove picture.jpg in tmpfs: %s", er)})
+
+				return
+			}
 		}
-	}
 
-	cmdList := []string {
-		"/opt/vc/bin/raspistill -o /media/tmpfs/picture.jpg -t 0 -q 8 -tl 1000 -w 320 -h 240 -bm",
-		"LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_file.so -f /media/tmpfs -n picture.jpg\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"",
+		cmdList = []string{
+			fmt.Sprintf("/opt/vc/bin/raspistill -o %s -t 0 -q 8 -tl 1000 -w 320 -h 240 -bm", fl),
+			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_file.so -f %s -n picture.jpg\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", tmpfsPath),
+		}
+	case "motionOnly":
+		cmdList = []string{
+			"LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_uvc.so -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"",
+			// ./mjpg_streamer -i "./input_uvc.so -f 15 -r 640x480" -o "./output_http.so -w ./www"
+		}
+	default:
+		log.Criticalf("Unknown \"%s\" method in config file !", method)
+		c.JSON(500, gin.H{"error": fmt.Sprintf("Unknown \"%s\" method in config file !", method)})
+		os.Exit(1)
 	}
 
 	for _, cmd := range cmdList {
-		go func (cmd string) {
+		go func(cmd string) {
 			log.Info(fmt.Sprintf("Launch command: \"%s\"", cmd))
 			m := exec.Command("/bin/sh", "-c", cmd)
 			m.Start()
 			m.Wait()
 		}(cmd)
 	}
-	
-	if out, err := exec.Command("/bin/sh", "-c", "pgrep ^raspistill$").Output(); err != nil {
-		log.Debug("Sortie: " + string(out))
 
-		exec.Command("/bin/sh", "-c", "killall -9 mjpg_streamer").Output()
-		c.JSON(500, gin.H{"error": "raspistill is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
+	switch method {
+	case "tmpfs":
+		if out, err := exec.Command("/bin/sh", "-c", "pgrep ^raspistill$").Output(); err != nil {
+			log.Debug("Sortie: " + string(out))
 
-		return
-	}
+			exec.Command("/bin/sh", "-c", "killall -9 mjpg_streamer").Output()
+			c.JSON(500, gin.H{"error": "raspistill is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
 
-	if out, err := exec.Command("/bin/sh", "-c", "pgrep ^mjpg_streamer$").Output(); err != nil {
-		log.Debug("Sortie: " + string(out))
-		log.Debug("mjpg_streamer a merdé")
+			return
+		}
 
-		exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
-		c.JSON(500, gin.H{"error": "mjpg_stream is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
+		if out, err := exec.Command("/bin/sh", "-c", "pgrep ^mjpg_streamer$").Output(); err != nil {
+			log.Debug("Sortie: " + string(out))
+			log.Debug("mjpg_streamer a merdé")
 
-		return
+			exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
+			c.JSON(500, gin.H{"error": "mjpg_stream is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
+
+			return
+		}
+	case "motionOnly":
+		if out, err := exec.Command("/bin/sh", "-c", "pgrep ^mjpg_streamer$").Output(); err != nil {
+			log.Debugf("Sortie: %s", string(out))
+			log.Debug("mjpg_streamer a merdé")
+
+			c.JSON(500, gin.H{"error": "mjpg_stream is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
+
+			return
+		}
 	}
 
 	c.JSON(200, gin.H{"alarm": "stop", "stream": "start", "location": viper.GetString("server.location")})
 }
 
 func StopAlarm(c *gin.Context) {
-	exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
+	log := logging.MustGetLogger("log")
+	method := viper.GetString("server.method")
+
+	switch method {
+	case "tmpfs":
+		exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
+	case "motionOnly":
+	default:
+		log.Criticalf("Unknown \"%s\" method in config file !", method)
+		c.JSON(500, gin.H{"error": fmt.Sprintf("Unknown \"%s\" method in config file !", method)})
+		os.Exit(1)
+	}
 
 	if _, err := exec.Command("/bin/sh", "-c", "killall -9 motion").Output(); err != nil {
 		c.JSON(500, gin.H{"error": "Unable to stop motion", "location": viper.GetString("server.location")})
@@ -156,37 +239,54 @@ func StopAlarm(c *gin.Context) {
 		return
 	}
 
-	if err := os.RemoveAll("/tmp/motion"); err != nil {
-		c.JSON(500, gin.H{"error": "Unable to remove directory"})
+	switch method {
+	case "tmpfs":
+		if err := os.RemoveAll("/tmp/motion"); err != nil {
+			c.JSON(500, gin.H{"error": "Unable to remove directory"})
 
-		return
-	}
+			return
+		}
 
-	if err := os.Remove("/media/tmpfs/picture.jpg"); err != nil {
-		c.JSON(500, gin.H{"error": "Unable to remove picture.jpg in tmpfs"})
+		if err := os.Remove("/media/tmpfs/picture.jpg"); err != nil {
+			c.JSON(500, gin.H{"error": "Unable to remove picture.jpg in tmpfs"})
 
-		return
+			return
+		}
+	case "motionOnly":
 	}
 
 	c.JSON(200, gin.H{"alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
 }
 
 func StopStream(c *gin.Context) {
-	if _, err := exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output(); err != nil {
-		c.JSON(500, gin.H{"error": "Unable to stop raspistill", "location": viper.GetString("server.location")})
+	// log := logging.MustGetLogger("log")
+	method := viper.GetString("server.method")
 
-		return
+	switch method {
+	case "tmpfs":
+		if _, err := exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output(); err != nil {
+			c.JSON(500, gin.H{"error": "Unable to stop raspistill", "location": viper.GetString("server.location")})
+
+			return
+		}
+	case "motionOnly":
+	default:
 	}
+
 	if _, err := exec.Command("/bin/sh", "-c", "killall -9 mjpg_streamer").Output(); err != nil {
 		c.JSON(500, gin.H{"error": "Unable to stop mjpg_stream", "location": viper.GetString("server.location")})
 
 		return
 	}
 
-	if err := os.Remove("/media/tmpfs/picture.jpg"); err != nil {
-		c.JSON(500, gin.H{"error": "Unable to remove picture.jpg in tmpfs"})
+	switch method {
+	case "tmpfs":
+		if err := os.Remove("/media/tmpfs/picture.jpg"); err != nil {
+			c.JSON(500, gin.H{"error": "Unable to remove picture.jpg in tmpfs"})
 
-		return
+			return
+		}
+	case "motionOnly":
 	}
 
 	c.JSON(200, gin.H{"alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})

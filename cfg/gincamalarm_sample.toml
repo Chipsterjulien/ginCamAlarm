@@ -5,3 +5,7 @@ logtype = "debug"
 [server]
 port = 8090
 location = "somewhere"
+# method can take: motionOnly, tmpfs
+method = ""
+# You need tmpfs for stream function in tmpfs method. It will be mounted automatically with fstab
+tmpfsPath = ""
