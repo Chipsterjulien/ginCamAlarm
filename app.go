@@ -44,6 +44,7 @@ func StartAlarm(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
 	method := viper.GetString("server.method")
+	angle := viper.GetInt("server.angle")
 	cmdList := []string{}
 
 	switch method {
@@ -64,7 +65,7 @@ func StartAlarm(c *gin.Context) {
 		}
 
 		cmdList = []string{
-			"/opt/vc/bin/raspistill -o /media/tmpfs/picture.jpg -t 0 -tl 459 -w 640 -h 480 -bm",
+			fmt.Sprintf("/opt/vc/bin/raspistill -o /media/tmpfs/picture.jpg -t 0 -rot %d -tl 459 -w 640 -h 480 -bm", angle),
 			"motion",
 			"mailmotion",
 		}
@@ -141,15 +142,16 @@ func StartStream(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
 	method := viper.GetString("server.method")
+	angle := viper.GetInt("server.angle")
 	cmdList := []string{}
 
 	switch method {
 	case "tmpfs":
 		tmpfsPath := viper.GetString("server.tmpfsPath")
-		fl := path.Join(tmpfsPath, "picture.jpg")
+		filename := path.Join(tmpfsPath, "picture.jpg")
 
-		if _, err := os.Stat(fl); err == nil {
-			if er := os.Remove(fl); er != nil {
+		if _, err := os.Stat(filename); err == nil {
+			if er := os.Remove(filename); er != nil {
 				c.JSON(500, gin.H{"error": fmt.Sprintf("Unable to start stream since unable to remove picture.jpg in tmpfs: %s", er)})
 
 				return
@@ -157,12 +159,12 @@ func StartStream(c *gin.Context) {
 		}
 
 		cmdList = []string{
-			fmt.Sprintf("/opt/vc/bin/raspistill -o %s -t 0 -q 8 -tl 1000 -w 320 -h 240 -bm", fl),
+			fmt.Sprintf("/opt/vc/bin/raspistill -o %s -rot %d -t 0 -q 8 -tl 1000 -w 320 -h 240 -bm", filename, angle),
 			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_file.so -f %s -n picture.jpg\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", tmpfsPath),
 		}
 	case "motionOnly":
 		cmdList = []string{
-			"LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_uvc.so -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"",
+			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_uvc.so -rot %d -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", angle),
 			// ./mjpg_streamer -i "./input_uvc.so -f 15 -r 640x480" -o "./output_http.so -w ./www"
 		}
 	default:

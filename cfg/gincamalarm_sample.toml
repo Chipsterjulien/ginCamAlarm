@@ -9,3 +9,5 @@ location = "somewhere"
 method = ""
 # You need tmpfs for stream function in tmpfs method. It will be mounted automatically with fstab
 tmpfsPath = ""
+# Allows to rotate image
+angle = 0
