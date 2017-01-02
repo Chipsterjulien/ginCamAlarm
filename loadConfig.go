@@ -1,11 +1,11 @@
 package main
 
 import (
+	// "fmt"
 	"github.com/op/go-logging"
 	"github.com/spf13/viper"
 	"os"
 	"path"
-	"fmt"
 )
 
 func loadConfig(filenamePath *string, filename *string) {
@@ -15,7 +15,7 @@ func loadConfig(filenamePath *string, filename *string) {
 	viper.AddConfigPath(*filenamePath)
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Critical("Unable to load config \"" + path.Join(*filenamePath, *filename)+ "\" file:", err)
+		log.Criticalf("Unable to load config \"%s\" file: %v", path.Join(*filenamePath, *filename), err)
 		os.Exit(1)
 	}
 
@@ -38,7 +38,7 @@ func loadConfig(filenamePath *string, filename *string) {
 	}
 
 	log.Debug("loadConfig func:")
-	log.Debug(fmt.Sprintf("  path: %s", *filenamePath))
-	log.Debug(fmt.Sprintf("  filename: %s", *filename))
-	log.Debug(fmt.Sprintf("  logtype in file config is \"%s\"", viper.GetString("logtype")))
+	log.Debugf("  path: %s", *filenamePath)
+	log.Debugf("  filename: %s", *filename)
+	log.Debugf("  logtype in file config is \"%s\"", viper.GetString("logtype"))
 }

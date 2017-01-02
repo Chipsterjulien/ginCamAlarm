@@ -9,5 +9,19 @@ location = "somewhere"
 method = ""
 # You need tmpfs for stream function in tmpfs method. It will be mounted automatically with fstab
 tmpfsPath = ""
-# Allows to rotate image
+# Allows to rotate image, only for RPi cam
 angle = 0
+
+#
+# To use GPIO, you must install wiringPi or similar. It using "gpio" program
+#
+# Be careful, you must use the wpi position (gpio readall), not the physical position or bcm.
+# For example, 0 corresponds to physical location 11
+# At start, gpio0 list will be set to 0 and gpio1 list set to 1
+# At stop, the same lists will be toggle (gpio0 will be set to 1 and gpio1 set to 0)
+
+[atstart]
+# list of gpio that will be set to 0 at startup
+gpioto0 = []
+# list of gpio that will be set to 1 at startup
+gpioto1 = []

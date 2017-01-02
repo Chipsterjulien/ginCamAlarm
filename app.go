@@ -14,6 +14,19 @@ import (
 	"github.com/spf13/viper"
 )
 
+func main() {
+	confPath := "/etc/gincamalarm/"
+	confFilename := "gincamalarm"
+	logFilename := "/var/log/gincamalarm/error.log"
+
+	fd := initLogging(&logFilename)
+	defer fd.Close()
+
+	loadConfig(&confPath, &confFilename)
+
+	startApp()
+}
+
 func GetStateAlarm(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
@@ -21,23 +34,77 @@ func GetStateAlarm(c *gin.Context) {
 
 	out, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output()
 	if err != nil {
-		log.Debug(fmt.Sprintf("Retour de la commande pgrep: %v", err))
+		log.Debugf("Retour de la commande pgrep: %v", err)
 		alarm = "stop"
 	} else {
-		log.Debug(fmt.Sprintf("Retour de la commande pgrep: %s", out))
+		log.Debugf("Retour de la commande pgrep: %s", out)
 		alarm = "start"
 	}
 
 	out, err = exec.Command("/bin/sh", "-c", "pgrep ^mjpg_streamer$").Output()
 	if err != nil {
-		log.Debug(fmt.Sprintf("Retour de la commande pgrep: %v", err))
+		log.Debugf("Retour de la commande pgrep: %v", err)
 		stream = "stop"
 	} else {
-		log.Debug(fmt.Sprintf("Retour de la commande pgrep: %s", out))
+		log.Debugf("Retour de la commande pgrep: %s", out)
 		stream = "start"
 	}
 
 	c.JSON(200, gin.H{"alarm": alarm, "stream": stream, "location": viper.GetString("server.location")})
+}
+
+func gpioStartStop(startStop string) {
+	log := logging.MustGetLogger("log")
+
+	gpio0List := viper.GetStringSlice("atstart.gpioto0")
+	gpio1List := viper.GetStringSlice("atstart.gpioto1")
+
+	cmdJob := make([]string, (len(gpio0List)+len(gpio1List))*2)
+
+	log.Debugf("List of gpio to set to 0 at start: %v", gpio0List)
+	log.Debugf("List of gpio to set to 1 at start: %v", gpio1List)
+
+	counter := 0
+	for _, gpio := range gpio0List {
+		cmdJob[counter] = fmt.Sprintf("gpio mode %s out", gpio)
+		counter++
+	}
+
+	for _, gpio := range gpio1List {
+		cmdJob[counter] = fmt.Sprintf("gpio mode %s out", gpio)
+		counter++
+	}
+
+	switch startStop {
+	case "start":
+		for _, gpio := range gpio0List {
+			cmdJob[counter] = fmt.Sprintf("gpio write %s 0", gpio)
+			counter++
+		}
+
+		for _, gpio := range gpio1List {
+			cmdJob[counter] = fmt.Sprintf("gpio write %s 1", gpio)
+			counter++
+		}
+	case "stop":
+		for _, gpio := range gpio0List {
+			cmdJob[counter] = fmt.Sprintf("gpio write %s 1", gpio)
+			counter++
+		}
+
+		for _, gpio := range gpio1List {
+			cmdJob[counter] = fmt.Sprintf("gpio write %s 0", gpio)
+			counter++
+		}
+	}
+
+	log.Debugf("list of jobs: %v", cmdJob)
+
+	for _, job := range cmdJob {
+		if _, err := exec.Command("/usr/bin/sh", "-c", job).Output(); err != nil {
+			log.Warningf("Unable to exec \"%s\" !", job)
+		}
+	}
 }
 
 func StartAlarm(c *gin.Context) {
@@ -57,8 +124,8 @@ func StartAlarm(c *gin.Context) {
 			}
 		}
 
-		if err := os.MkdirAll("/tmp/motion", 0744); err != nil {
-			log.Warning(fmt.Sprintf("Unable to create /tmp/motion directories: %v", err))
+		if err := os.MkdirAll("/tmp/motion/send", 0744); err != nil {
+			log.Warningf("Unable to create /tmp/motion directories: %v", err)
 			c.JSON(500, gin.H{"error": "mailmotion is not running", "alarm": "stop", "location": viper.GetString("server.location")})
 
 			return
@@ -83,7 +150,7 @@ func StartAlarm(c *gin.Context) {
 
 	for _, cmd := range cmdList {
 		go func(cmd string) {
-			log.Info(fmt.Sprintf("Launch command: \"%s\"", cmd))
+			log.Infof("Launch command: \"%s\"", cmd)
 			m := exec.Command("/bin/sh", "-c", cmd)
 			m.Start()
 			m.Wait()
@@ -134,6 +201,8 @@ func StartAlarm(c *gin.Context) {
 		c.JSON(500, gin.H{"error": fmt.Sprintf("Unknown \"%s\" method in config file !", method)})
 		os.Exit(1)
 	}
+
+	gpioStartStop("start")
 
 	c.JSON(200, gin.H{"alarm": "start", "stream": "stop", "location": viper.GetString("server.location")})
 }
@@ -164,8 +233,7 @@ func StartStream(c *gin.Context) {
 		}
 	case "motionOnly":
 		cmdList = []string{
-			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_uvc.so -rot %d -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", angle),
-			// ./mjpg_streamer -i "./input_uvc.so -f 15 -r 640x480" -o "./output_http.so -w ./www"
+			"LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_uvc.so -y -r 320x240 -f 1\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"",
 		}
 	default:
 		log.Criticalf("Unknown \"%s\" method in config file !", method)
@@ -175,7 +243,7 @@ func StartStream(c *gin.Context) {
 
 	for _, cmd := range cmdList {
 		go func(cmd string) {
-			log.Info(fmt.Sprintf("Launch command: \"%s\"", cmd))
+			log.Infof("Launch command: \"%s\"", cmd)
 			m := exec.Command("/bin/sh", "-c", cmd)
 			m.Start()
 			m.Wait()
@@ -185,7 +253,7 @@ func StartStream(c *gin.Context) {
 	switch method {
 	case "tmpfs":
 		if out, err := exec.Command("/bin/sh", "-c", "pgrep ^raspistill$").Output(); err != nil {
-			log.Debug("Sortie: " + string(out))
+			log.Debugf("Sortie: %s", string(out))
 
 			exec.Command("/bin/sh", "-c", "killall -9 mjpg_streamer").Output()
 			c.JSON(500, gin.H{"error": "raspistill is not running", "alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
@@ -194,7 +262,7 @@ func StartStream(c *gin.Context) {
 		}
 
 		if out, err := exec.Command("/bin/sh", "-c", "pgrep ^mjpg_streamer$").Output(); err != nil {
-			log.Debug("Sortie: " + string(out))
+			log.Debugf("Sortie: %s", string(out))
 			log.Debug("mjpg_streamer a merdé")
 
 			exec.Command("/bin/sh", "-c", "killall -9 raspistill").Output()
@@ -212,6 +280,8 @@ func StartStream(c *gin.Context) {
 			return
 		}
 	}
+
+	gpioStartStop("start")
 
 	c.JSON(200, gin.H{"alarm": "stop", "stream": "start", "location": viper.GetString("server.location")})
 }
@@ -257,6 +327,8 @@ func StopAlarm(c *gin.Context) {
 	case "motionOnly":
 	}
 
+	gpioStartStop("stop")
+
 	c.JSON(200, gin.H{"alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
 }
 
@@ -291,6 +363,8 @@ func StopStream(c *gin.Context) {
 	case "motionOnly":
 	}
 
+	gpioStartStop("stop")
+
 	c.JSON(200, gin.H{"alarm": "stop", "stream": "stop", "location": viper.GetString("server.location")})
 }
 
@@ -322,22 +396,9 @@ func startApp() {
 		v1.PUT("/stopStream", StopStream)
 	}
 
-	log.Debug(fmt.Sprintf("Port: %d", viper.GetInt("server.port")))
+	log.Debugf("Port: %d", viper.GetInt("server.port"))
 	if err := g.Run(":" + strconv.Itoa(viper.GetInt("server.port"))); err != nil {
-		log.Critical(fmt.Sprintf("Unable to start serveur: %v", err))
+		log.Criticalf("Unable to start serveur: %v", err)
 		os.Exit(1)
 	}
-}
-
-func main() {
-	confPath := "/etc/gincamalarm/"
-	confFilename := "gincamalarm"
-	logFilename := "/var/log/gincamalarm/error.log"
-
-	fd := initLogging(&logFilename)
-	defer fd.Close()
-
-	loadConfig(&confPath, &confFilename)
-
-	startApp()
 }
