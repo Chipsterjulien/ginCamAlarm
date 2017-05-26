@@ -11,6 +11,8 @@ method = ""
 tmpfsPath = ""
 # Allows to rotate image, only for RPi cam
 angle = 0
+# File to say if alarm is started or not
+startalarm = "/tmp/gincamalarm"
 
 #
 # To use GPIO, you must install wiringPi or similar. It using "gpio" program
