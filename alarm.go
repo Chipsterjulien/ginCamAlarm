@@ -114,6 +114,13 @@ func startAlarm(c *gin.Context) {
 	timeLaps := viper.GetInt("raspistill.timeLaps")
 	cmdList := []string{}
 
+	if motion == "" {
+		log.Critical("In config file, motionProgram is empty !")
+		c.JSON(500, gin.H{"error": "Error in config file !"})
+
+		return
+	}
+
 	switch method {
 	case tmpfs:
 		if _, err := os.Stat("/media/tmpfs/picture.jpg"); err == nil {
