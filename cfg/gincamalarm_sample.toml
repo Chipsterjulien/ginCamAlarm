@@ -1,7 +1,11 @@
 # logtype can take: debug, info, notice, warning, error, critical
 # warning is the default
-logtype = "debug"
+logtype = "notice"
 
+# motionProgram is the program which use to detect motion. You should put full path:
+# for example: motionProgram = "/usr/bin/motion"
+# another example: motionProgram = "/usr/bin/hogc"
+# You can find full path for example in console with: which motion
 [default]
 motionProgram = "/usr/bin/motion"
 
@@ -12,17 +16,23 @@ location = "somewhere"
 method = ""
 # You need tmpfs for stream function in tmpfs method. It will be mounted automatically with fstab
 tmpfsPath = ""
-# File to say if alarm is started or not
-startalarm = "/tmp/gincamalarm"
+# File to say if alarm is started or not.
+# Becarefull with /tmp folder. At reboot, all files and folder in /tmp will be removed
+startalarm = ""
 
 [raspistill]
-camWidth = 800
-camHeight = 600
+# width of camera
+camWidth = 640
+# height of camera
+camHeight = 480
+# timeLaps is a time in millisecond which used to refresh picture
 timeLaps = 450
 # Allows to rotate image, only for RPi cam
 angle = 0
 
-# Only with method motionOnly
+# Only with method motionOnly since with tmpfs, it's using raspistill and width
+# and height will be the size of raspistill even if streamWidth and streamHeight
+# were different
 [mjpgstreamer]
 streamWidth = 320
 streamHeight = 240
