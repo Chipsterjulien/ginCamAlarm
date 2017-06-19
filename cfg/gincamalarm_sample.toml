@@ -2,6 +2,9 @@
 # warning is the default
 logtype = "debug"
 
+[default]
+motionProgram = "/usr/bin/motion"
+
 [server]
 port = 8090
 location = "somewhere"
@@ -9,10 +12,20 @@ location = "somewhere"
 method = ""
 # You need tmpfs for stream function in tmpfs method. It will be mounted automatically with fstab
 tmpfsPath = ""
-# Allows to rotate image, only for RPi cam
-angle = 0
 # File to say if alarm is started or not
 startalarm = "/tmp/gincamalarm"
+
+[raspistill]
+camWidth = 800
+camHeight = 600
+timeLaps = 450
+# Allows to rotate image, only for RPi cam
+angle = 0
+
+# Only with method motionOnly
+[mjpgstreamer]
+streamWidth = 320
+streamHeight = 240
 
 #
 # To use GPIO, you must install wiringPi or similar. It using "gpio" program
