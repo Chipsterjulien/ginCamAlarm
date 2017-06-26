@@ -39,12 +39,12 @@ func startStream(c *gin.Context) {
 		cmdList = []string{
 			fmt.Sprintf("/opt/vc/bin/raspistill -o %s -t 0 -rot %d -tl %d -w %d -h %d -bm", filename, angle, timeLaps, camWidth, camHeight),
 			// raspistill -o /media/tmpfs/picture.jpg -t 0 -tl 750 -w 640 -h 480 -bm
-			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", tmpfsPath, "picture.jpg"),
+			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", tmpfsPath, "picture.jpg"),
 			//           LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i "input_file.so -f /media/tmpfs -n picture.jpg -r 320x240" -o "output_http.so -w /usr/share/mjpg-streamer/www/"
 		}
 	case motionOnly:
 		cmdList = []string{
-			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i \"input_uvc.so -y -r %dx%d -f 1\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", streamWidth, streamHeight),
+			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_uvc.so -y -r %dx%d -f 1\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", streamWidth, streamHeight),
 		}
 	default:
 		log.Criticalf("Unknown \"%s\" method in config file !", method)

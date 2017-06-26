@@ -49,8 +49,9 @@ func getStateAlarm(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
 	var alarm, stream string
+	motion := viper.GetString("default.motionProgram")
 
-	out, err := exec.Command("/bin/sh", "-c", "pgrep ^motion$").Output()
+	out, err := exec.Command("/bin/sh", "-c", fmt.Sprintf("pgrep ^%s$", motion)).Output()
 	if err != nil {
 		log.Debugf("Retour de la commande pgrep: %v", err)
 		alarm = stop
