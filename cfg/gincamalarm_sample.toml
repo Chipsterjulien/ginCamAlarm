@@ -7,7 +7,7 @@ logtype = "notice"
 # another example: motionProgram = "/usr/bin/hogc"
 # You can find full path for example in console with: which motion
 [default]
-motionProgram = "/usr/bin/motion"
+motionProgram = "motion"
 
 [server]
 port = 8090

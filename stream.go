@@ -16,8 +16,8 @@ func startStream(c *gin.Context) {
 
 	method := viper.GetString("server.method")
 	angle := viper.GetInt("raspistill.angle")
-	camWidth := viper.GetInt("raspistill.camWidth")
-	camHeight := viper.GetInt("raspistill.camHeight")
+	// camWidth := viper.GetInt("raspistill.camWidth")
+	// camHeight := viper.GetInt("raspistill.camHeight")
 	timeLaps := viper.GetInt("raspistill.timeLaps")
 	streamWidth := viper.GetInt("mjpgstreamer.streamWidth")
 	streamHeight := viper.GetInt("mjpgstreamer.streamHeight")
@@ -37,7 +37,7 @@ func startStream(c *gin.Context) {
 		}
 
 		cmdList = []string{
-			fmt.Sprintf("/opt/vc/bin/raspistill -o %s -t 0 -rot %d -tl %d -w %d -h %d -bm", filename, angle, timeLaps, camWidth, camHeight),
+			fmt.Sprintf("/opt/vc/bin/raspistill -o %s -t 0 -rot %d -tl %d -w %d -h %d -bm", filename, angle, timeLaps, streamWidth, streamHeight),
 			// raspistill -o /media/tmpfs/picture.jpg -t 0 -tl 750 -w 640 -h 480 -bm
 			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", tmpfsPath, "picture.jpg"),
 			//           LD_LIBRARY_PATH=/usr/lib mjpg_streamer -i "input_file.so -f /media/tmpfs -n picture.jpg -r 320x240" -o "output_http.so -w /usr/share/mjpg-streamer/www/"

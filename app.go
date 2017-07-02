@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"os/exec"
 	"strconv"
 	"time"
 
@@ -43,87 +41,6 @@ func createFile() {
 	}
 
 	defer slurp.Close()
-}
-
-func getStateAlarm(c *gin.Context) {
-	log := logging.MustGetLogger("log")
-
-	var alarm, stream string
-	motion := viper.GetString("default.motionProgram")
-
-	out, err := exec.Command("/bin/sh", "-c", fmt.Sprintf("pgrep ^%s$", motion)).Output()
-	if err != nil {
-		log.Debugf("Retour de la commande pgrep: %v", err)
-		alarm = stop
-	} else {
-		log.Debugf("Retour de la commande pgrep: %s", out)
-		alarm = start
-	}
-
-	out, err = exec.Command("/bin/sh", "-c", "pgrep ^mjpg_streamer$").Output()
-	if err != nil {
-		log.Debugf("Retour de la commande pgrep: %v", err)
-		stream = stop
-	} else {
-		log.Debugf("Retour de la commande pgrep: %s", out)
-		stream = start
-	}
-
-	c.JSON(200, gin.H{"alarm": alarm, "stream": stream, "location": viper.GetString("server.location")})
-}
-
-func gpioStartStop(startStop string) {
-	log := logging.MustGetLogger("log")
-
-	gpio0List := viper.GetStringSlice("atstart.gpioto0")
-	gpio1List := viper.GetStringSlice("atstart.gpioto1")
-
-	cmdJob := make([]string, (len(gpio0List)+len(gpio1List))*2)
-
-	log.Debugf("List of gpio to set to 0 at start: %v", gpio0List)
-	log.Debugf("List of gpio to set to 1 at start: %v", gpio1List)
-
-	counter := 0
-	for _, gpio := range gpio0List {
-		cmdJob[counter] = fmt.Sprintf("gpio mode %s out", gpio)
-		counter++
-	}
-
-	for _, gpio := range gpio1List {
-		cmdJob[counter] = fmt.Sprintf("gpio mode %s out", gpio)
-		counter++
-	}
-
-	switch startStop {
-	case start:
-		for _, gpio := range gpio0List {
-			cmdJob[counter] = fmt.Sprintf("gpio write %s 0", gpio)
-			counter++
-		}
-
-		for _, gpio := range gpio1List {
-			cmdJob[counter] = fmt.Sprintf("gpio write %s 1", gpio)
-			counter++
-		}
-	case stop:
-		for _, gpio := range gpio0List {
-			cmdJob[counter] = fmt.Sprintf("gpio write %s 1", gpio)
-			counter++
-		}
-
-		for _, gpio := range gpio1List {
-			cmdJob[counter] = fmt.Sprintf("gpio write %s 0", gpio)
-			counter++
-		}
-	}
-
-	log.Debugf("list of jobs: %v", cmdJob)
-
-	for _, job := range cmdJob {
-		if _, err := exec.Command("/usr/bin/sh", "-c", job).Output(); err != nil {
-			log.Warningf("Unable to exec \"%s\" !", job)
-		}
-	}
 }
 
 func isStarted() bool {
