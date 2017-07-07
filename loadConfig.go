@@ -1,11 +1,11 @@
 package main
 
 import (
-	// "fmt"
-	"github.com/op/go-logging"
-	"github.com/spf13/viper"
 	"os"
 	"path"
+
+	"github.com/op/go-logging"
+	"github.com/spf13/viper"
 )
 
 func loadConfig(filenamePath *string, filename *string) {

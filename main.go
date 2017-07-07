@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -11,17 +12,23 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	tmpfs      = "tmpfs"
-	motionOnly = "motionOnly"
-	start      = "start"
-	stop       = "stop"
+var (
+	srcRand      = rand.NewSource(time.Now().UnixNano())
+	tmpfs        = "tmpfs"
+	motionOnly   = "motionOnly"
+	streamerOnly = "streamerOnly"
+	start        = "start"
+	stop         = "stop"
 )
 
 func main() {
 	confPath := "/etc/gincamalarm/"
 	confFilename := "gincamalarm"
 	logFilename := "/var/log/gincamalarm/error.log"
+
+	// confPath := "cfg/"
+	// confFilename := "gincamalarm_sample"
+	// logFilename := "errors.log"
 
 	fd := initLogging(&logFilename)
 	defer fd.Close()
@@ -32,15 +39,14 @@ func main() {
 }
 
 func createFile() {
-	slurp, err := os.OpenFile(viper.GetString("server.startalarm"), os.O_RDONLY|os.O_CREATE, 0666)
-	if err != nil {
-		log := logging.MustGetLogger("log")
+	log := logging.MustGetLogger("log")
 
-		log.Criticalf("Unable to create \"%s\" file !", viper.GetString("server.startalarm"))
-		os.Exit(1)
+	slurp, err := os.Create(viper.GetString("default.startalarm"))
+	if err != nil {
+		log.Criticalf("Unable to create \"%s\" file: %s", viper.GetString("default.startalarm"), err)
 	}
 
-	defer slurp.Close()
+	slurp.Close()
 }
 
 func isStarted() bool {
@@ -56,11 +62,10 @@ func isStarted() bool {
 }
 
 func removeFile() {
-	if err := os.Remove(viper.GetString("server.startalarm")); err != nil {
-		log := logging.MustGetLogger("log")
+	log := logging.MustGetLogger("log")
 
-		log.Criticalf("Unable to remove \"%s\" file !", viper.GetString("server.startalarm"))
-		os.Exit(1)
+	if err := os.Remove(viper.GetString("default.startalarm")); err != nil {
+		log.Criticalf("Unable to remove \"%s\" file: %s", viper.GetString("default.startalarm"), err)
 	}
 }
 
@@ -73,15 +78,16 @@ func startApp() {
 
 	g := gin.Default()
 
-	g.Use(cors.Middleware(cors.Config{
-		Origins:         "*",
-		Methods:         "GET, PUT, POST, DELETE",
-		RequestHeaders:  "Origin, Authorization, Content-Type",
-		ExposedHeaders:  "",
-		MaxAge:          50 * time.Second,
-		Credentials:     true,
-		ValidateHeaders: false,
-	}))
+	g.Use(cors.Middleware(
+		cors.Config{
+			Origins:         "*",
+			Methods:         "GET, PUT, POST, DELETE",
+			RequestHeaders:  "Origin, Authorization, Content-Type",
+			ExposedHeaders:  "",
+			MaxAge:          50 * time.Second,
+			Credentials:     true,
+			ValidateHeaders: false,
+		}))
 
 	v1 := g.Group("api/v1")
 	{
@@ -92,7 +98,7 @@ func startApp() {
 		v1.PUT("/stopStream", stopStream)
 	}
 
-	if isStarted() {
+	if viper.GetBool("default.alwaysStart") || isStarted() {
 		restartAlarm()
 	}
 

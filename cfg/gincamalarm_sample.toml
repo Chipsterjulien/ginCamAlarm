@@ -1,24 +1,30 @@
 # logtype can take: debug, info, notice, warning, error, critical
 # warning is the default
-logtype = "notice"
+logtype = "warning"
 
 # motionProgram is the program which use to detect motion. You should put full path:
 # for example: motionProgram = "/usr/bin/motion"
 # another example: motionProgram = "/usr/bin/hogc"
 # You can find full path for example in console with: which motion
 [default]
-motionProgram = "motion"
+motionProgram = ["motion"]
+# method can take: motionOnly, tmpfs, streamerOnly
+method = ""
+# You need tmpfs for stream function in tmpfs method. It will be mounted automatically with fstab
+tmpfsPath = ""
+pictureFilename = ""
+# Where we store picture with tmpfs method
+picturePathStore = ""
+# A send folder will be created after
+dirSendName = ""
+# File to say if alarm is started or not.
+# Becarefull with /tmp folder. At reboot, all files and folder in /tmp will be removed
+startalarm = ""
+alwaysStart = false
 
 [server]
 port = 8090
 location = "somewhere"
-# method can take: motionOnly, tmpfs
-method = ""
-# You need tmpfs for stream function in tmpfs method. It will be mounted automatically with fstab
-tmpfsPath = ""
-# File to say if alarm is started or not.
-# Becarefull with /tmp folder. At reboot, all files and folder in /tmp will be removed
-startalarm = ""
 
 [raspistill]
 # width of camera
