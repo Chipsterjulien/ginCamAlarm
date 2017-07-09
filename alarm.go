@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	logging "github.com/op/go-logging"
@@ -17,14 +16,18 @@ func isAllStarted(c *gin.Context, cmdList *[]string) error {
 	log := logging.MustGetLogger("log")
 
 	for _, cmd := range *cmdList {
-		cmd = strings.Replace(cmd, "LD_LIBRARY_PATH=/usr/lib ", "", -1)
-		realExec := path.Base(strings.Split(cmd, " ")[0])
-		cmdStr := fmt.Sprintf("pgrep ^%s$", realExec)
+		// cmd = strings.Replace(cmd, "LD_LIBRARY_PATH=/usr/lib ", "", -1)
+		// realExec := path.Base(strings.Split(cmd, " ")[0])
+		// cmdStr := fmt.Sprintf("pgrep ^%s$", realExec)
+		getRealExec(&cmd)
+
+		cmdStr := fmt.Sprintf("pgrep ^%s$", cmd)
 
 		log.Debugf("Cmd to exec: %s", cmdStr)
 
 		if _, err := exec.Command("/bin/sh", "-c", cmdStr).Output(); err != nil {
-			errorStr := fmt.Sprintf("\"%s\" is not running !", realExec)
+			// errorStr := fmt.Sprintf("\"%s\" is not running !", realExec)
+			errorStr := fmt.Sprintf("\"%s\" is not running !", cmd)
 
 			log.Warning(errorStr)
 
@@ -39,14 +42,17 @@ func isAllStartedWithoutGinContext(cmdList *[]string) error {
 	log := logging.MustGetLogger("log")
 
 	for _, cmd := range *cmdList {
-		cmd = strings.Replace(cmd, "LD_LIBRARY_PATH=/usr/lib ", "", -1)
-		realExec := path.Base(strings.Split(cmd, " ")[0])
-		cmdStr := fmt.Sprintf("pgrep ^%s$", realExec)
+		// cmd = strings.Replace(cmd, "LD_LIBRARY_PATH=/usr/lib ", "", -1)
+		// realExec := path.Base(strings.Split(cmd, " ")[0])
+		// cmdStr := fmt.Sprintf("pgrep ^%s$", realExec)
+		getRealExec(&cmd)
+		cmdStr := fmt.Sprintf("pgrep ^%s$", cmd)
 
 		log.Debugf("Cmd to exec: %s", cmdStr)
 
 		if _, err := exec.Command("/bin/sh", "-c", cmdStr).Output(); err != nil {
-			errorStr := fmt.Sprintf("\"%s\" is not running !", realExec)
+			// errorStr := fmt.Sprintf("\"%s\" is not running !", realExec)
+			errorStr := fmt.Sprintf("\"%s\" is not running !", cmd)
 
 			log.Warning(errorStr)
 
@@ -400,8 +406,11 @@ func stopAlarm(c *gin.Context) {
 
 func killAll(cmdList *[]string) {
 	for _, cmd := range *cmdList {
-		realExec := path.Base(strings.Split(cmd, " ")[0])
-		cmdStr := fmt.Sprintf("killall -9 %s", realExec)
+		// realExec := path.Base(strings.Split(cmd, " ")[0])
+		// cmdStr := fmt.Sprintf("killall -9 %s", realExec)
+		// exec.Command("/bin/sh", "-c", cmdStr).Output()
+		getRealExec(&cmd)
+		cmdStr := fmt.Sprintf("killall -9 %s", cmd)
 		exec.Command("/bin/sh", "-c", cmdStr).Output()
 	}
 }

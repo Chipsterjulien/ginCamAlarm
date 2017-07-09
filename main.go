@@ -52,8 +52,8 @@ func createFile() {
 func isStarted() bool {
 	log := logging.MustGetLogger("log")
 
-	if _, err := os.Stat(viper.GetString("server.startalarm")); err != nil {
-		log.Debugf("File %s not exist", viper.GetString("server.startalarm"))
+	if _, err := os.Stat(viper.GetString("default.startalarm")); err != nil {
+		log.Debugf("File %s not exist", viper.GetString("default.startalarm"))
 
 		return false
 	}
