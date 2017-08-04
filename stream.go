@@ -28,11 +28,14 @@ func startStream(c *gin.Context) {
 		method = tmpfs
 	}
 
+	gpioStartStop(start)
+
 	switch method {
 	case tmpfs:
 		if err := isPrepareTmpfsMethode(); err != nil {
 			log.Critical(err)
 			c.JSON(500, gin.H{"error": err})
+			gpioStartStop(stop)
 
 			return
 		}
@@ -50,6 +53,8 @@ func startStream(c *gin.Context) {
 	default:
 		log.Criticalf("Unknown \"%s\" method in config file !", method)
 		c.JSON(500, gin.H{"error": fmt.Sprintf("Unknown \"%s\" method in config file !", method)})
+		gpioStartStop(stop)
+
 		os.Exit(1)
 	}
 
@@ -64,11 +69,13 @@ func startStream(c *gin.Context) {
 
 	if err := isAllStarted(c, &cmdList); err != nil {
 		killAll(&cmdList)
+		gpioStartStop(stop)
 
 		c.JSON(500, gin.H{"alarm": stop, "stream": stop, "location": viper.GetString("server.location")})
 	} else {
 		gpioStartStop(start)
 
+		streamIsStarted = true
 		c.JSON(200, gin.H{"alarm": stop, "stream": start, "location": viper.GetString("server.location")})
 	}
 }
@@ -101,5 +108,6 @@ func stopStream(c *gin.Context) {
 
 	gpioStartStop(stop)
 
+	streamIsStarted = false
 	c.JSON(200, gin.H{"alarm": stop, "stream": stop, "location": viper.GetString("server.location")})
 }

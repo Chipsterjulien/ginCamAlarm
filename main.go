@@ -13,7 +13,12 @@ import (
 )
 
 var (
-	srcRand      = rand.NewSource(time.Now().UnixNano())
+	srcRand         = rand.NewSource(time.Now().UnixNano())
+	alarmIsStarted  = false
+	streamIsStarted = false
+)
+
+const (
 	tmpfs        = "tmpfs"
 	motionOnly   = "motionOnly"
 	streamerOnly = "streamerOnly"
@@ -36,37 +41,6 @@ func main() {
 	loadConfig(&confPath, &confFilename)
 
 	startApp()
-}
-
-func createFile() {
-	log := logging.MustGetLogger("log")
-
-	slurp, err := os.Create(viper.GetString("default.startalarm"))
-	if err != nil {
-		log.Criticalf("Unable to create \"%s\" file: %s", viper.GetString("default.startalarm"), err)
-	}
-
-	slurp.Close()
-}
-
-func isStarted() bool {
-	log := logging.MustGetLogger("log")
-
-	if _, err := os.Stat(viper.GetString("default.startalarm")); err != nil {
-		log.Debugf("File %s not exist", viper.GetString("default.startalarm"))
-
-		return false
-	}
-
-	return true
-}
-
-func removeFile() {
-	log := logging.MustGetLogger("log")
-
-	if err := os.Remove(viper.GetString("default.startalarm")); err != nil {
-		log.Criticalf("Unable to remove \"%s\" file: %s", viper.GetString("default.startalarm"), err)
-	}
 }
 
 func startApp() {
@@ -100,6 +74,7 @@ func startApp() {
 
 	if viper.GetBool("default.alwaysStart") || isStarted() {
 		restartAlarm()
+		alarmIsStarted = true
 	}
 
 	log.Debugf("Port: %d", viper.GetInt("server.port"))
