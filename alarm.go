@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	logging "github.com/op/go-logging"
@@ -173,6 +174,14 @@ func restartAlarm() {
 }
 
 func startAlarm(c *gin.Context) {
+	if err := startAlarmWithoutGinContext(); err != nil {
+		c.JSON(500, gin.H{"alarm": stop, "stream": stop, "location": viper.GetString("server.location")})
+	} else {
+		c.JSON(200, gin.H{"alarm": start, "stream": stop, "location": viper.GetString("server.location")})
+	}
+}
+
+func startAlarmWithoutGinContext() error {
 	log := logging.MustGetLogger("log")
 
 	method := viper.GetString("default.method")
@@ -187,21 +196,21 @@ func startAlarm(c *gin.Context) {
 
 	if len(motion) == 0 {
 		log.Critical("Error in config file. motionProgram is not define !")
-		c.JSON(500, gin.H{"error": "Error in config file. motionProgram is not define !"})
 
-		return
+		return errors.New("Error in config file. motionProgram is not define")
 	}
 
 	gpioStartStop(start)
+
+	time.Sleep(time.Second * 1)
 
 	switch method {
 	case tmpfs:
 		if err := isPrepareTmpfsMethode(); err != nil {
 			log.Critical(err)
-			c.JSON(500, gin.H{"error": err})
 			gpioStartStop(stop)
 
-			return
+			return err
 		}
 
 		cmdList = []string{
@@ -221,10 +230,9 @@ func startAlarm(c *gin.Context) {
 	case streamerOnly:
 		if err := isPrepareTmpfsMethode(); err != nil {
 			log.Critical(err)
-			c.JSON(500, gin.H{"error": err})
 			gpioStartStop(stop)
 
-			return
+			return err
 		}
 
 		cmdList = []string{
@@ -236,7 +244,6 @@ func startAlarm(c *gin.Context) {
 		errorStr := fmt.Sprintf("Unknown \"%s\" method in config file", method)
 
 		log.Critical(errorStr)
-		c.JSON(500, gin.H{"error": errorStr})
 		gpioStartStop(stop)
 		removeFile()
 
@@ -253,22 +260,27 @@ func startAlarm(c *gin.Context) {
 	}
 
 	// check if all started
-	if err := isAllStarted(c, &cmdList); err != nil {
+	if err := isAllStartedWithoutGinContext(&cmdList); err != nil {
 		killAll(&cmdList)
 		gpioStartStop(stop)
 		removeFile()
 
-		c.JSON(500, gin.H{"alarm": stop, "stream": stop, "location": viper.GetString("server.location")})
-	} else {
-		// gpioStartStop(start)
-		createFile()
-
-		alarmIsStarted = true
-		c.JSON(200, gin.H{"alarm": start, "stream": stop, "location": viper.GetString("server.location")})
+		return err
 	}
+
+	createFile()
+
+	alarmIsStarted = true
+	return nil
 }
 
 func stopAlarm(c *gin.Context) {
+	stopAlarmWithoutGinContext()
+
+	c.JSON(200, gin.H{"alarm": stop, "stream": stop, "location": viper.GetString("server.location")})
+}
+
+func stopAlarmWithoutGinContext() {
 	method := viper.GetString("default.method")
 	// motion := viper.GetString("default.motionProgram")
 	motion := viper.GetStringSlice("default.motionProgram")
@@ -315,5 +327,4 @@ func stopAlarm(c *gin.Context) {
 	removeFile()
 
 	alarmIsStarted = false
-	c.JSON(200, gin.H{"alarm": stop, "stream": stop, "location": viper.GetString("server.location")})
 }

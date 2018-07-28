@@ -20,7 +20,14 @@ dirSendName = ""
 # File to say if alarm is started or not.
 # Becarefull with /tmp folder. At reboot, all files and folder in /tmp will be removed
 startalarm = ""
+# If alarm always start after reboot
 alwaysStart = false
+# Possibility to restart camera after a time. Some cameras can't automatically
+# change expose and/or iso so rebooting allows the camera to automatically
+# adjust according to the light
+restartCamera = true
+# If restartCamera is true, camera will restart after a time in minute(s)
+restartCamTime = 10
 
 [server]
 port = 8090

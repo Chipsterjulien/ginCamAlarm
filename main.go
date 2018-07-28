@@ -40,7 +40,22 @@ func main() {
 
 	loadConfig(&confPath, &confFilename)
 
+	go restartCameraTime()
 	startApp()
+}
+
+func restartCameraTime() {
+	if viper.GetBool("default.restartCamTime") {
+		for {
+			if alarmIsStarted {
+				time.Sleep(time.Minute * time.Duration(viper.GetInt("default.restartCamTime")))
+				stopAlarmWithoutGinContext()
+				startAlarmWithoutGinContext()
+			} else {
+				time.Sleep(time.Second * 10)
+			}
+		}
+	}
 }
 
 func startApp() {
