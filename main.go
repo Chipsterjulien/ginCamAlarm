@@ -81,10 +81,10 @@ func startApp() {
 	v1 := g.Group("api/v1")
 	{
 		v1.GET("/stateAlarm", getStateAlarm)
-		v1.PUT("/startAlarm", startAlarm)
-		v1.PUT("/stopAlarm", stopAlarm)
-		v1.PUT("/startStream", startStream)
-		v1.PUT("/stopStream", stopStream)
+		v1.GET("/startAlarm", startAlarm)
+		v1.GET("/stopAlarm", stopAlarm)
+		v1.GET("/startStream", startStream)
+		v1.GET("/stopStream", stopStream)
 	}
 
 	if viper.GetBool("default.alwaysStart") || isStarted() {
