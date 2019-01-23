@@ -152,14 +152,14 @@ func restartAlarm() {
 
 		login := viper.GetString("default.loginCam")
 		password := viper.GetString("default.passwordCam")
-		port := viper.GetInt("mjpgstreamer.port")
+		port := viper.GetInt("raspistill.port")
 		activateIdentification := viper.GetBool("raspistill.activateIdentification")
 
 		if activateIdentification && len(login) > 0 && len(password) > 0 {
-			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d -c %s:%s", tmpfsPath, "picture.jpg", port, login, password)
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/ -p %d -c %s:%s\"", tmpfsPath, "picture.jpg", port, login, password)
 			cmdList = append(cmdList, cmd)
 		} else {
-			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d", tmpfsPath, "picture.jpg", port)
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/ -p %d\"", tmpfsPath, "picture.jpg", port)
 			cmdList = append(cmdList, cmd)
 		}
 	default:
@@ -257,10 +257,10 @@ func startAlarmWithoutGinContext() error {
 		activateIdentification := viper.GetBool("raspistill.activateIdentification")
 
 		if activateIdentification && len(login) > 0 && len(password) > 0 {
-			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d -c %s:%s", tmpfsPath, "picture.jpg", port, login, password)
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/ -p %d -c %s:%s\"", tmpfsPath, "picture.jpg", port, login, password)
 			cmdList = append(cmdList, cmd)
 		} else {
-			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d", tmpfsPath, "picture.jpg", port)
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/ -p %d\"", tmpfsPath, "picture.jpg", port)
 			cmdList = append(cmdList, cmd)
 		}
 
