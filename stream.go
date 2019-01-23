@@ -53,10 +53,10 @@ func startStream(c *gin.Context) {
 		activateIdentification := viper.GetBool("mjpgstreamer.activateIdentification")
 
 		if activateIdentification && len(login) > 0 && len(password) > 0 {
-			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d -c %s:%s", tmpfsPath, "picture.jpg", port, login, password)
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/ -p %d -c %s:%s\"", tmpfsPath, "picture.jpg", port, login, password)
 			cmdList = append(cmdList, cmd)
 		} else {
-			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d", tmpfsPath, "picture.jpg", port)
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/ -p %d\"", tmpfsPath, "picture.jpg", port)
 			cmdList = append(cmdList, cmd)
 		}
 
@@ -67,10 +67,10 @@ func startStream(c *gin.Context) {
 		activateIdentification := viper.GetBool("mjpgstreamer.activateIdentification")
 
 		if activateIdentification && len(login) > 0 && len(password) > 0 {
-			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d -c %s:%s", tmpfsPath, "picture.jpg", port, login, password)
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/ -p %d -c %s:%s\"", tmpfsPath, "picture.jpg", port, login, password)
 			cmdList = append(cmdList, cmd)
 		} else {
-			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d", tmpfsPath, "picture.jpg", port)
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/ -p %d\"", tmpfsPath, "picture.jpg", port)
 			cmdList = append(cmdList, cmd)
 		}
 
