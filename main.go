@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -12,43 +11,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	srcRand         = rand.NewSource(time.Now().UnixNano())
-	alarmIsStarted  = false
-	streamIsStarted = false
-)
-
-const (
-	tmpfs        = "tmpfs"
-	motionOnly   = "motionOnly"
-	streamerOnly = "streamerOnly"
-	start        = "start"
-	stop         = "stop"
-)
-
-func main() {
-	confPath := "/etc/gincamalarm/"
-	confFilename := "gincamalarm"
-	logFilename := "/var/log/gincamalarm/error.log"
-
-	// confPath := "cfg/"
-	// confFilename := "gincamalarm_sample"
-	// logFilename := "errors.log"
-
-	fd := initLogging(&logFilename)
-	defer fd.Close()
-
-	loadConfig(&confPath, &confFilename)
-
-	go restartCameraTime()
-	startApp()
-}
-
 func restartCameraTime() {
 	if viper.GetBool("default.restartCamTime") {
 		for {
 			if alarmIsStarted {
-				time.Sleep(time.Minute * time.Duration(viper.GetInt("default.restartCamTime")))
+				restartCamTime := viper.GetInt("default.restartCamTime")
+				time.Sleep(time.Minute * time.Duration(restartCamTime))
+
 				stopAlarmWithoutGinContext()
 				startAlarmWithoutGinContext()
 			} else {
@@ -81,13 +50,15 @@ func startApp() {
 	v1 := g.Group("api/v1")
 	{
 		v1.GET("/stateAlarm", getStateAlarm)
-		v1.GET("/startAlarm", startAlarm)
-		v1.GET("/stopAlarm", stopAlarm)
-		v1.GET("/startStream", startStream)
-		v1.GET("/stopStream", stopStream)
+		v1.PUT("/startAlarm", startAlarm)
+		v1.PUT("/stopAlarm", stopAlarm)
+		v1.PUT("/startStream", startStream)
+		v1.PUT("/stopStream", stopStream)
 	}
 
-	if viper.GetBool("default.alwaysStart") || isStarted() {
+	alwaysStartAfterAReboot := viper.GetBool("default.alwaysStartAfterAReboot")
+
+	if alwaysStartAfterAReboot || isStarted() {
 		restartAlarm()
 		alarmIsStarted = true
 	}
@@ -97,4 +68,22 @@ func startApp() {
 		log.Criticalf("Unable to start serveur: %v", err)
 		os.Exit(1)
 	}
+}
+
+func main() {
+	confPath := "/etc/gincamalarm/"
+	confFilename := "gincamalarm"
+	logFilename := "/var/log/gincamalarm/error.log"
+
+	// confPath := "cfg/"
+	// confFilename := "gincamalarm_sample"
+	// logFilename := "errors.log"
+
+	fd := initLogging(&logFilename)
+	defer fd.Close()
+
+	loadConfig(&confPath, &confFilename)
+
+	go restartCameraTime()
+	startApp()
 }

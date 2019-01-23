@@ -148,7 +148,19 @@ func restartAlarm() {
 
 		cmdList = []string{
 			fmt.Sprintf("/opt/vc/bin/raspistill -o %s -t 0 -rot %d -tl %d -w %d -h %d -bm", pictureTempfsCompletPath, angle, timeLaps, camWidth, camHeight),
-			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", tmpfsPath, "picture.jpg"),
+		}
+
+		login := viper.GetString("default.loginCam")
+		password := viper.GetString("default.passwordCam")
+		port := viper.GetInt("mjpgstreamer.port")
+		activateIdentification := viper.GetBool("raspistill.activateIdentification")
+
+		if activateIdentification && len(login) > 0 && len(password) > 0 {
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d -c %s:%s", tmpfsPath, "picture.jpg", port, login, password)
+			cmdList = append(cmdList, cmd)
+		} else {
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d", tmpfsPath, "picture.jpg", port)
+			cmdList = append(cmdList, cmd)
 		}
 	default:
 		log.Criticalf("Unknown \"%s\" method in config file !", method)
@@ -175,7 +187,7 @@ func restartAlarm() {
 
 func startAlarm(c *gin.Context) {
 	if err := startAlarmWithoutGinContext(); err != nil {
-		c.JSON(500, gin.H{"alarm": stop, "stream": stop, "location": viper.GetString("server.location")})
+		c.JSON(500, gin.H{"alarm": stop, "stream": stop, "location": viper.GetString("server.location"), "error": err})
 	} else {
 		c.JSON(200, gin.H{"alarm": start, "stream": stop, "location": viper.GetString("server.location")})
 	}
@@ -237,7 +249,19 @@ func startAlarmWithoutGinContext() error {
 
 		cmdList = []string{
 			fmt.Sprintf("/opt/vc/bin/raspistill -o %s -t 0 -rot %d -tl %d -w %d -h %d -bm", pictureTempfsCompletPath, angle, timeLaps, camWidth, camHeight),
-			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", tmpfsPath, "picture.jpg"),
+		}
+
+		login := viper.GetString("default.loginCam")
+		password := viper.GetString("default.passwordCam")
+		port := viper.GetInt("raspistill.port")
+		activateIdentification := viper.GetBool("raspistill.activateIdentification")
+
+		if activateIdentification && len(login) > 0 && len(password) > 0 {
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d -c %s:%s", tmpfsPath, "picture.jpg", port, login, password)
+			cmdList = append(cmdList, cmd)
+		} else {
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d", tmpfsPath, "picture.jpg", port)
+			cmdList = append(cmdList, cmd)
 		}
 
 	default:
@@ -269,8 +293,8 @@ func startAlarmWithoutGinContext() error {
 	}
 
 	createFile()
-
 	alarmIsStarted = true
+
 	return nil
 }
 
@@ -282,7 +306,6 @@ func stopAlarm(c *gin.Context) {
 
 func stopAlarmWithoutGinContext() {
 	method := viper.GetString("default.method")
-	// motion := viper.GetString("default.motionProgram")
 	motion := viper.GetStringSlice("default.motionProgram")
 	cmdList := []string{}
 
@@ -290,7 +313,6 @@ func stopAlarmWithoutGinContext() {
 	case tmpfs:
 		cmdList = []string{
 			"/opt/vc/bin/raspistill",
-			// motion,
 			"mailmotion",
 		}
 
@@ -298,7 +320,6 @@ func stopAlarmWithoutGinContext() {
 
 	case motionOnly:
 		cmdList = []string{
-			// motion,
 			"mailmotion",
 		}
 

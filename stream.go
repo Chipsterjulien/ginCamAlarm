@@ -11,6 +11,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Pour charger la page, voir ici: https://www.sigmdel.ca/michel/ha/rpi/streaming_en.html
+// D'autres info intéressantes ici: https://serverfault.com/questions/788173/nginx-reverse-proxy-config-videomjpg-stream-to-use-a-single-connection-to-the
+
 func startStream(c *gin.Context) {
 	log := logging.MustGetLogger("log")
 
@@ -42,12 +45,33 @@ func startStream(c *gin.Context) {
 
 		cmdList = []string{
 			fmt.Sprintf("/opt/vc/bin/raspistill -o %s -t 0 -rot %d -tl %d -w %d -h %d -bm", pictureTempfsCompletPath, angle, timeLaps, streamWidth, streamHeight),
-			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", tmpfsPath, pictureFilename),
+		}
+
+		login := viper.GetString("default.loginCam")
+		password := viper.GetString("default.passwordCam")
+		port := viper.GetInt("mjpgstreamer.port")
+		activateIdentification := viper.GetBool("mjpgstreamer.activateIdentification")
+
+		if activateIdentification && len(login) > 0 && len(password) > 0 {
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d -c %s:%s", tmpfsPath, "picture.jpg", port, login, password)
+			cmdList = append(cmdList, cmd)
+		} else {
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d", tmpfsPath, "picture.jpg", port)
+			cmdList = append(cmdList, cmd)
 		}
 
 	case motionOnly:
-		cmdList = []string{
-			fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_uvc.so -y -r %dx%d -f 1\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\"", streamWidth, streamHeight),
+		login := viper.GetString("default.loginCam")
+		password := viper.GetString("default.passwordCam")
+		port := viper.GetInt("mjpgstreamer.port")
+		activateIdentification := viper.GetBool("mjpgstreamer.activateIdentification")
+
+		if activateIdentification && len(login) > 0 && len(password) > 0 {
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d -c %s:%s", tmpfsPath, "picture.jpg", port, login, password)
+			cmdList = append(cmdList, cmd)
+		} else {
+			cmd := fmt.Sprintf("LD_LIBRARY_PATH=/usr/lib mjpg_streamer -b -i \"input_file.so -f %s -n %s\" -o \"output_http.so -w /usr/share/mjpg-streamer/www/\" -p %d", tmpfsPath, "picture.jpg", port)
+			cmdList = append(cmdList, cmd)
 		}
 
 	default:
@@ -67,16 +91,28 @@ func startStream(c *gin.Context) {
 		}(cmd)
 	}
 
+	location := viper.GetString("server.location")
+
 	if err := isAllStarted(c, &cmdList); err != nil {
 		killAll(&cmdList)
 		gpioStartStop(stop)
 
-		c.JSON(500, gin.H{"alarm": stop, "stream": stop, "location": viper.GetString("server.location")})
+		c.JSON(500, gin.H{"alarm": stop, "stream": stop, "location": location, "error": err})
 	} else {
 		gpioStartStop(start)
 
 		streamIsStarted = true
-		c.JSON(200, gin.H{"alarm": stop, "stream": start, "location": viper.GetString("server.location")})
+		login := viper.GetString("default.loginCam")
+		password := viper.GetString("default.passwordCam")
+		port := viper.GetInt("mjpgstreamer.port")
+		activateIdentification := viper.GetBool("mjpgstreamer.activateIdentification")
+		sendIdentificationInJSON := viper.GetBool("mjpgstreamer.sendIdentificationInJSON")
+
+		if activateIdentification && sendIdentificationInJSON && len(login) > 0 && len(password) > 0 {
+			c.JSON(200, gin.H{"alarm": stop, "stream": start, "location": location, "login": login, "passwd": password, "port": port})
+		} else {
+			c.JSON(200, gin.H{"alarm": stop, "stream": start, "location": location, "port": port})
+		}
 	}
 }
 

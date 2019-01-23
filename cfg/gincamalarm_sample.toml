@@ -20,20 +20,26 @@ dirSendName = ""
 # File to say if alarm is started or not.
 # Becarefull with /tmp folder. At reboot, all files and folder in /tmp will be removed
 startalarm = ""
-# If alarm always start after reboot
-alwaysStart = false
+# If alarm always start after a reboot
+alwaysStartAfterAReboot = false
 # Possibility to restart camera after a time. Some cameras can't automatically
 # change expose and/or iso so rebooting allows the camera to automatically
 # adjust according to the light
 restartCamera = true
 # If restartCamera is true, camera will restart after a time in minute(s)
 restartCamTime = 10
+# To protect anyone can see your stream, you should put login and password
+loginCam = ""
+passwordCam = ""
 
 [server]
 port = 8090
 location = "somewhere"
 
 [raspistill]
+# port default is 8080
+port = 8080
+activateIdentification = true
 # width of camera
 camWidth = 640
 # height of camera
@@ -47,8 +53,12 @@ angle = 0
 # and height will be the size of raspistill even if streamWidth and streamHeight
 # were different
 [mjpgstreamer]
+# port default is 8080
+port = 8081
 streamWidth = 320
 streamHeight = 240
+activateIdentification = true
+sendIdentificationInJSON = false
 
 #
 # To use GPIO, you must install wiringPi or similar. It using "gpio" program
